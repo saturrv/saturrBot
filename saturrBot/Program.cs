@@ -1,6 +1,8 @@
 ﻿using DSharpPlus;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.Entities;
+using DSharpPlus.EventArgs;
+using saturrBot.commands;
 using saturrBot.config;
 using System;
 using System.Collections.Generic;
@@ -34,6 +36,20 @@ namespace saturrBot
 
             Client.Ready += Client_Ready;
 
+            Client.GuildMemberAdded += OnGuildMemberAdded;
+
+            var commandsConfig = new CommandsNextConfiguration()
+            {
+                StringPrefixes = new string[] { jsonReader.prefix },
+                EnableMentionPrefix = true,
+                EnableDms =true,
+                EnableDefaultHelp = false
+            };
+
+            Commands = Client.UseCommandsNext(commandsConfig);
+
+            Commands.RegisterCommands<manageCommands>(); 
+
             await Client.ConnectAsync();
             await Task.Delay(-1);
         }
@@ -42,5 +58,22 @@ namespace saturrBot
         {
             return Task.CompletedTask;
         }
+
+        private static async Task OnGuildMemberAdded(DiscordClient sender, GuildMemberAddEventArgs e)
+        {
+            string roleName = "Member";
+            var role = e.Guild.Roles.Values.FirstOrDefault(r => r.Name.Equals(roleName, StringComparison.OrdinalIgnoreCase));
+
+            if (role != null)
+            {
+                await e.Member.GrantRoleAsync(role);
+                Console.WriteLine($"Роль {roleName} была автоматически выдана {e.Member.DisplayName}.");
+            }
+            else
+            {
+                Console.WriteLine($"Роль с именем {roleName} не найдена.");
+            }
+        }
     }
 }
+
